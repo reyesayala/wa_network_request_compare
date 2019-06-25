@@ -68,25 +68,6 @@ Arguments:
 * print - (optional) Include to print urls and file names to stdout, default doesn't print.
 
 
-### calculate_similarity.py
-This program gets all the screenshots and calls functions in similarity_measures.py to calculate the image similarity socres.
-> The output CSV will have five to seven columns, current URl, archive URL, current screenshot file name, archive screenshot file name, structural similarty score, mean squared error, vector comparison score.
-
-command syntax:
-```
-python3 calculate_similarity.py --csv=file_names.csv --currdir=current_pics/ --archdir=archive_pics/ --out=score.csv --ssim --mse --vec --print
-```
-Arguments:
-* csv - The CSV file with screenshot file names.
-* currdir - Directory with screenshots of the current websites.
-* archdir - Directory with screenshots of the archive websites.
-* out - The CSV file to write the results of the comparisons.
-* ssim - (optional) Include to calculate structural similarity.
-* mse - (optional) Include to calculate mean square error.
-* vec - (optional) Include to calculate vector comparison score.
-* print - (optional) Include to print results to stdout.
-
-
 ## Authors
 * **Brenda Reyes Ayala** 
 * **Andy Li**
