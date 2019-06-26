@@ -7,6 +7,7 @@ import urllib.error
 import logging
 import time
 import os
+from datetime import datetime, timedelta
 from pyppeteer import launch
 from pyppeteer import errors
 
@@ -82,11 +83,11 @@ class CSVWriter(Writer):
         """Appends the header info to rows."""
 
         if self.use_archive:
-            self.rows.append(["archive_id", "url_id", "date", "url", "status_code"])
+            self.rows.append(["archive_id", "url_id", "date", "url", "resource_type", "status_code"])
         else:
-            self.rows.append(["archive_id", "url_id", "url", "status_code"])
+            self.rows.append(["archive_id", "url_id", "url", "resource_type", "status_code"])
 
-    def writerow(self, archive_id, url_id, url, status_code, date=None):
+    def writerow(self, archive_id, url_id, url, resource_type, status_code, date=None):
         """Appends CSV element to rows.
 
         Parameters
@@ -97,6 +98,8 @@ class CSVWriter(Writer):
             The url ID.
         url : str
             The network request url.
+        resource_type : str
+            The resouce type of the network request.
         status_code : str
             The status code of the network request url.
         date : str
@@ -105,9 +108,9 @@ class CSVWriter(Writer):
         """
         
         if self.use_archive:
-            self.rows.append([archive_id, url_id, date, url, status_code])
+            self.rows.append([archive_id, url_id, date, url, resource_type, status_code])
         else:
-            self.rows.append([archive_id, url_id, url, status_code])
+            self.rows.append([archive_id, url_id, url, resource_type, status_code])
 
 class IndexWriter(Writer):
     """
@@ -211,12 +214,9 @@ def create_with_csv(csv_in_name, csv_out_name, csv_index_name, timeout_duration,
 
             site_status, site_message, extraction_message = extract_requests(csv_writer, url, archive_id, url_id, timeout_duration, date)
 
-            #if use_archive:
+            # Append index element to rows (array in IndexWriter class)
             index_writer.writerow(archive_id, url_id, url, site_status, \
                     site_message, extraction_message, date)
-            #else:
-             #   index_writer.writerow(archive_id, url_id, url, site_status, \
-              #          site_message, extraction_message)
     
         # Write elements to CSV file
         index_writer.finalize()
@@ -296,11 +296,11 @@ def create_with_db(csv_out_name, csv_index_name, timeout_duration, make_csv, use
     # Append elements to database
     for element in csv_elements_no_header:
         if use_archive:
-            cursor.execute('INSERT INTO archive_network_requests VALUES ({0}, {1}, "{2}", "{3}", "{4}")'\
-                           .format(element[0], element[1], element[2], element[3], element[4]))
+            cursor.execute('INSERT INTO archive_network_requests VALUES ({0}, {1}, "{2}", "{3}", "{4}", "{5}")'\
+                           .format(element[0], element[1], element[2], element[3], element[4], element[5]))
         else:
-            cursor.execute('INSERT INTO current_network_requests VALUES ({0}, {1}, "{2}", "{3}")'\
-                           .format(element[0], element[1], element[2], element[3]))
+            cursor.execute('INSERT INTO current_network_requests VALUES ({0}, {1}, "{2}", "{3}", "{4}")'\
+                           .format(element[0], element[1], element[2], element[3], element[4]))
 
     # Commit and close database
     connection.commit()
@@ -355,7 +355,7 @@ def extract_requests(csv_writer, url, archive_id, url_id, timeout_duration, date
         return site_status, site_message, e
 
 async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeout_duration, date):
-    """Create trace file using the pyppeteer package.
+    """Extract network requests using the pyppeteer package.
     
     Parameters
     ----------
@@ -380,16 +380,19 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
 
     """
 
-    browser = await launch(headless=True)
+    browser = await launch(headless=True)#, dumpio=True)
 
     # Intercepts network requests
     async def handle_request(request):
+        #print("\tRequest => url: {0}".format(request.url))
         await request.continue_()
 
     # Intercepts network responses
     async def handle_response(response, csv_writer, archive_id, url_id, date):
-        csv_writer.writerow(archive_id, url_id, response.url, response.status, date)
-        # print("Response => url: {0}, status code: {1}".format(response.url, response.status))
+        csv_writer.writerow(archive_id, url_id, response.url, \
+                response.request.resourceType, response.status, date)
+        #print("Response => url: {0}, status code: {1}, resource type: {2}".format(response.url, \
+                #response.status, response.request.resourceType))
 
     page = await browser.newPage()
 
@@ -564,8 +567,8 @@ def connect_sql(path, use_archive):
                            "collection_name(archiveID));")
 
             cursor.execute("CREATE TABLE IF NOT EXISTS archive_network_requests (archiveID INT, "
-                           "urlID INT, date TEXT, url TEXT, statusCode TEXT, FOREIGN KEY (archiveID) "
-                           "REFERENCES collection_name(archiveID));")
+                           "urlID INT, date TEXT, url TEXT, resourceType TEXT, statusCode TEXT, "
+                           "FOREIGN KEY (archiveID) REFERENCES collection_name(archiveID));")
             connection.commit()
 
             # Fetch all archive IDs being worked on in archive urls
@@ -596,8 +599,8 @@ def connect_sql(path, use_archive):
                            "TEXT, FOREIGN KEY (archiveID) REFERENCES collection_name(archiveID));")
 
             cursor.execute("CREATE TABLE IF NOT EXISTS current_network_requests (archiveID INT, "
-                           "urlID INT, url TEXT, statusCode TEXT, FOREIGN KEY (archiveID) REFERENCES "
-                           "collection_name(archiveID));")
+                           "urlID INT, url TEXT, resourceType TEXT, statusCode TEXT, "
+                           "FOREIGN KEY (archiveID) REFERENCES collection_name(archiveID));")
             connection.commit()
 
             # Fetch all archive IDs being worked on in current urls
@@ -618,8 +621,15 @@ def connect_sql(path, use_archive):
             connection.close()
             exit()
 
-def set_up_logging():
+def set_up_logging(use_archive, timeout_duration):
     """Setting up logging format.
+
+    Parameters
+    ----------
+    use_archive : bool
+        Whether or not the input is archive seeds. True is archive seeds. False is current seeds.
+    timeout_duration : str
+        Duration before timeout when attempting to connect to a website.
 
     Notes
     -----
@@ -632,14 +642,38 @@ def set_up_logging():
 
     """
 
-    logging.basicConfig(filename="extraction_log.txt", filemode='a',
-                        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                        datefmt='%d-%b-%y %H:%M:%S %p', level=logging.INFO)
+    if use_archive:
+        logging.basicConfig(filename="archive_extraction_log_{}.txt".format(timeout_duration),
+                            filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                            datefmt='%d-%b-%y %H:%M:%S %p', level=logging.INFO)
+    else:
+        logging.basicConfig(filename="current_extraction_log_{}.txt".format(timeout_duration),
+                            filemode='a', format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                            datefmt='%d-%b-%y %H:%M:%S %p', level=logging.INFO)
+
+def convert_time(secs):
+    """Converts seconds into days:hours:minutes:seconds
+
+    Parameters
+    ----------
+    secs : int
+
+    References
+    ----------
+    .. [1] https://stackoverflow.com/questions/4048651/python-function-to-convert-seconds-into-minutes-hours-and-days
+
+    """
+
+    sec = timedelta(seconds=int(secs))
+    d = datetime(1,1,1) + sec
+
+    print("DAYS:HOURS:MIN:SEC")
+    print("%d:%d:%d:%d" % (d.day-1, d.hour, d.minute, d.second))
 
 def main():
     csv_in_name, csv_out_name, csv_index_name, \
             timeout_duration, use_csv, use_db, make_csv, use_archive = parse_args()
-    set_up_logging()
+    set_up_logging(use_archive, timeout_duration)
 
     print("Extracting network requests...")
     if use_csv:
@@ -647,5 +681,6 @@ def main():
     if use_db:
         create_with_db(csv_out_name, csv_index_name, timeout_duration, make_csv, use_archive)
 
+start_time = time.time()
 main()
-
+convert_time(int(time.time() - start_time))
