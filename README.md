@@ -1,5 +1,5 @@
-# Web Archiving Screenshot Compare
-Utilities for creating screenshots of archived websites and their live counterparts and compares the two screenshots.
+# Web Archiving Network Request Compare
+Utilities for extracting network requests of archived websites and their live counterparts and compares the network requests.
 
 ## Getting Started
 Some packages such as pyppeteer run best on python 3.6. The necessary packages are listed in environment.yml.
@@ -92,6 +92,7 @@ Arguments:
 * index - The CSV file to write the extraction status of the URLs.
 * timeout - (optional) Specify duration before timeout for each site, in seconds, default 30 seconds.
 * archive - Include if input CSV file or input DB file is used for archive URLs.
+
 
 ## Authors
 * **Brenda Reyes Ayala** 
