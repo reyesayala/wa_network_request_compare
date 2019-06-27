@@ -68,6 +68,31 @@ Arguments:
 * print - (optional) Include to print urls and file names to stdout, default doesn't print.
 
 
+### extract_network_requests.py
+This program outputs two CSV files, one with the extraction status of the current/archive URLs, and the other with the network requests for the current/archive URLs.
+
+The CSV file containing the extraction status of the current/archive URLs will have six/seven columns, archive ID, URL ID, archive URL, site status, site message, extraction message, and date.
+
+* site status - Contains 'LIVE' if the URL can be reached or redirected, and 'FAIL' if the URL could not be reached (ex. 404).
+* site message - A reason on why site status was 'LIVE' or 'FAIL'. (ex. 'Redirected to https://..' or 'HTTPError: 404')
+* extraction message - Either 'Extraction successful' or reason extraction was unsuccessful. (ex. 'Navigation Timeout Exceeded: 30000 ms exceeded.')
+
+The output CSV file containing the network requests of the current/archive URLs will have five/six columns, archive ID, URL ID, URL, resource type, status code, and date.
+
+> Date is only included if extracting network requests from archive URLs
+
+Command syntax:
+```
+python3 extract_network_requests.py --csv=current_urls.csv --db=urls.db --out=file_names.csv --index=extraction_status.csv --timeout=30 --archive
+```
+Arguments:
+* csv - Input CSV file with current/archive URLs. Interchangable with --db as only one type of input is allowed.
+* db - Input DB file with current/archive URLs.
+* out - The CSV file containing to write the network requests.
+* index - The CSV file to write the extraction status of the URLs.
+* timeout - (optional) Specify duration before timeout for each site, in seconds, default 30 seconds.
+* archive - Include if input CSV file or input DB file is used for archive URLs.
+
 ## Authors
 * **Brenda Reyes Ayala** 
 * **Andy Li**
