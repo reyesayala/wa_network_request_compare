@@ -53,16 +53,16 @@ Arguments:
 
 
 ### get_file_names.py
-This program outputs a CSV file which maps the current and archive URLs with their respective screenshots.
-> The output CSV will have four columns, current URl, archive URL, current screenshot file name, archive screenshot file name.
+This program outputs a CSV file which maps the current and archive URLs with their respective network request CSV files.
+> The output CSV will have four columns, current URl, archive URL, current network requests file name, archive network requests file name.
 
 Command syntax:
 ```
 python3 get_file_names.py --currcsv=current_index/ --archcsv=archive_index/ --db=urls.db --out=file_names.csv --print
 ```
 Arguments:
-* currcsv - The CSV file with the current screenshots index.
-* archcsv - The CSV file with the archive screenshots index.
+* currcsv - The CSV file with the current URLs index.
+* archcsv - The CSV file with the archive URLs index.
 * db - Input DB file with urls. Interchangeable with using --currcsv and --archcsv since only one type of input is allowed. 
 * out - The CSV file to write the urls and file names. 
 * print - (optional) Include to print urls and file names to stdout, default doesn't print.
@@ -83,16 +83,83 @@ The output CSV file containing the network requests of the current/archive URLs 
 
 Command syntax:
 ```
-python3 extract_network_requests.py --csv=current_urls.csv --db=urls.db --out=file_names.csv --index=extraction_status.csv --timeout=30 --archive
+python3 extract_network_requests.py --csv=current_urls.csv --db=urls.db --csvout=current_requests/ --index=extraction_status.csv --timeout=30 --archive
 ```
 Arguments:
 * csv - Input CSV file with current/archive URLs. Interchangable with --db as only one type of input is allowed.
 * db - Input DB file with current/archive URLs.
-* out - The CSV file containing to write the network requests.
+* csvout - The directory to store the CSV files containing the network requests.
 * index - The CSV file to write the extraction status of the URLs.
 * timeout - (optional) Specify duration before timeout for each site, in seconds, default 30 seconds.
 * archive - Include if input CSV file or input DB file is used for archive URLs.
 
+
+### current_traces.py (DEPRECATED use "extract_network_requests.py" instead)
+This program outputs one CSV file containing the extraction status of the current URLs, and a directory containing the trace files for the current URLs.
+
+The CSV file will have six columns, archive ID, URL ID, archive URL, site status, site message, and extraction message.
+
+* site status - Contains 'LIVE' if the URL can be reached or redirected, and 'FAIL' if the URL could not be reached (ex. 404).
+* site message - A reason on why site status was 'LIVE' or 'FAIL'. (ex. 'Redirected to https://..' or 'HTTPError: 404')
+* extraction message - Either 'Extraction successful' or reason extraction was unsuccessful. (ex. 'Navigation Timeout Exceeded: 30000 ms exceeded.')
+
+Command syntax:
+```
+python3 current_traces.py --csv=current_urls.csv --db=urls.db --out=current_index.csv --tracesout=current_traces/ --timeout=30 
+```
+Arguments:
+* csv - Input CSV file with current URLs. Interchangable with --db as only one type of input is allowed.
+* db - Input DB file with current URLs.
+* out - The CSV file to write the extraction status of the URLs.
+* tracesout - (optional) The directory to store the trace files, default creates a new folder named 'ctraces' in current directory.
+* timeout - (optional) Specify duration before timeout for each site, in seconds, default 30 seconds.
+
+
+### archive_traces.py (DEPRECATED use "extract_network_requests.py" instead)
+This program outputs one CSV file containing the extraction status of the archive URLs, and a directory containing the trace files for the archive URLs.
+
+The CSV file will have seven columns, archive ID, URL ID, date, archive URL, site status, site message, and extraction message.
+
+* site status - Contains 'LIVE' if the URL can be reached or redirected, and 'FAIL' if the URL could not be reached (ex. 404).
+* site message - A reason on why site status was 'LIVE' or 'FAIL'. (ex. 'Redirected to https://..' or 'HTTPError: 404')
+* extraction message - Either 'Extraction successful' or reason extraction was unsuccessful. (ex. 'Navigation Timeout Exceeded: 30000 ms exceeded.')
+
+Command syntax:
+```
+python3 archive_traces.py --csv=archive_urls.csv --db=urls.db --out=archive_index.csv --tracesout=archive_traces/ --timeout=30 
+```
+Arguments:
+* csv - Input CSV file with archive URLs. Interchangable with --db as only one type of input is allowed.
+* db - Input DB file with archive URLs.
+* out - The CSV file to write the extraction status of the URLs.
+* tracesout - (optional) The directory to store the trace files, default creates a new folder named 'atraces' in current directory.
+* timeout - (optional) Specify duration before timeout for each site, in seconds, default 30 seconds.
+
+
+### extract_current_data.py (DEPRECATED use "extract_network_requests.py" instead)
+This program outputs one CSV file containing the network requests of the current URLs. The CSV file will have four columns, archive ID, URL ID, URL, priority.
+
+Command syntax:
+```
+python3 extract_current_data.py --tracesin=current_traces/ --out=current_requests.csv --db=urls.db
+```
+Arguments:
+* tracesin - Directory where current trace files located.
+* out - The CSV file to write the network requests.
+* db - Output DB where network requests would be stored.
+
+
+### extract_archive_data.py (DEPRECATED use "extract_network_requests.py" instead)
+This program outputs one CSV file containing the network requests of the archive URLs. The CSV file will have five columns, archive ID, URL ID, date, URL, priority.
+
+Command syntax:
+```
+python3 extract_archive_data.py --tracesin=archive_traces/ --out=archive_requests.csv --db=urls.db
+```
+Arguments:
+* tracesin - Directory where archive trace files located.
+* out - The CSV file to write the network requests.
+* db - Output DB where network requests would be stored.
 
 ## Authors
 * **Brenda Reyes Ayala** 
