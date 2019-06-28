@@ -30,7 +30,7 @@ def create_with_csv(csv_in_name, csv_out_name, trace_out_path, timeout_duration)
         csv_reader = csv.reader(csv_file_in)
         with open(csv_out_name, 'w+') as csv_file_out:
             csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
-            csv_writer.writerow(["archive_id", "url_id", "archive_url", "site_status", "site_message", "extraction_message"])
+            csv_writer.writerow(["archive_id", "url_id", "date", "archive_url", "site_status", "site_message", "extraction_message"])
 
             # Skip the header of the CSV
             next(csv_reader)
@@ -46,7 +46,7 @@ def create_with_csv(csv_in_name, csv_out_name, trace_out_path, timeout_duration)
 
                 site_status, site_message, extraction_message = extract_traces(url, archive_id, url_id, date, trace_out_path, timeout_duration)
 
-                csv_writer.writerow([archive_id, url_id, url, site_status, site_message, extraction_message])
+                csv_writer.writerow([archive_id, url_id, date, url, site_status, site_message, extraction_message])
 
 def create_with_db(csv_out_name, trace_out_path, timeout_duration, make_csv):
     """Extracts trace files using the input database file with archive urls.
@@ -71,7 +71,7 @@ def create_with_db(csv_out_name, trace_out_path, timeout_duration, make_csv):
     if make_csv:
         csv_file_out = open(csv_out_name, "w+")
         csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
-        csv_writer.writerow(["archive_id", "url_id", "archive_url", "site_status", "site_message", "extraction_message"])
+        csv_writer.writerow(["archive_id", "url_id", "date", "archive_url", "site_status", "site_message", "extraction_message"])
     
     for row in results:
         archive_id = str(row[0])
@@ -85,10 +85,10 @@ def create_with_db(csv_out_name, trace_out_path, timeout_duration, make_csv):
         site_status, site_message, extraction_message = extract_traces(url, archive_id, url_id, date, trace_out_path, timeout_duration)
 
         if make_csv:
-            csv_writer.writerow([archive_id, url_id, url, site_status, site_message, extraction_message])
+            csv_writer.writerow([archive_id, url_id, date, url, site_status, site_message, extraction_message])
 
-        cursor.execute('INSERT INTO archive_trace_status VALUES ({0}, {1}, "{2}", "{3}", "{4}", "{5}")'\
-                      .format(archive_id, url_id, url, site_status, site_message, extraction_message))
+        cursor.execute('INSERT INTO archive_trace_status VALUES ({0}, {1}, "{2}", "{3}", "{4}", "{5}", "{6}")'\
+                      .format(archive_id, url_id, date, url, site_status, site_message, extraction_message))
 
     connection.commit()
     connection.close()
@@ -351,7 +351,7 @@ def connect_sql(path):
 
     if cursor.fetchone()[0] == 1:
         cursor.execute("CREATE TABLE IF NOT EXISTS archive_trace_status (archiveID INT, urlID INT, "
-                       "url TEXT, siteStatus TEXT, siteMessage TEXT, extractionMessage TEXT, "
+                       "date TEXT, url TEXT, siteStatus TEXT, siteMessage TEXT, extractionMessage TEXT, "
                        "FOREIGN KEY (archiveID) REFERENCES collection_name(archiveID));")
         connection.commit()
 
