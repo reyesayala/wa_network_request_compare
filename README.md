@@ -136,7 +136,7 @@ Arguments:
 * timeout - (optional) Specify duration before timeout for each site, in seconds, default 30 seconds.
 
 
-## extract_current_data.py (DEPRECATED use "extract_network_requests.py" instead)
+### extract_current_data.py (DEPRECATED use "extract_network_requests.py" instead)
 This program outputs one CSV file containing the network requests of the current URLs. The CSV file will have four columns, archive ID, URL ID, URL, priority.
 
 Command syntax:
@@ -149,7 +149,7 @@ Arguments:
 * db - Output DB where network requests would be stored.
 
 
-## extract_archive_data.py (DEPRECATED use "extract_network_requests.py" instead)
+### extract_archive_data.py (DEPRECATED use "extract_network_requests.py" instead)
 This program outputs one CSV file containing the network requests of the archive URLs. The CSV file will have five columns, archive ID, URL ID, date, URL, priority.
 
 Command syntax:
