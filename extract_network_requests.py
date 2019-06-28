@@ -28,6 +28,8 @@ class Writer:
 
     Methods
     -------
+    reset()
+        Clears the elements inside rows and changes the file_nam preparing for the next CSV file.
     finalize()
         Writes the elements inside rows to the CSV file.
 
@@ -53,6 +55,19 @@ class Writer:
         self.file_name = file_name
         self.rows = []
         self.use_archive = use_archive
+
+    def reset(self, file_name):
+        """Clears the array and changes the file_name preparing for the next CSV file.
+        
+        Parameters
+        ----------
+        file_name : str
+            The CSV file name where info is output to.
+
+        """
+
+        self.file_name = file_name
+        self.rows.clear()
 
     def finalize(self):
         """Writes the elements inside rows to the CSV file."""
@@ -167,15 +182,15 @@ class IndexWriter(Writer):
         else:
             self.rows.append([archive_id, url_id, url, site_status, site_message, extraction_message])
 
-def create_with_csv(csv_in_name, csv_out_name, csv_index_name, timeout_duration, use_archive):
+def create_with_csv(csv_in_name, csv_out_path, csv_index_name, timeout_duration, use_archive):
     """Extracts network requests using the input CSV with seed urls.
     
     Parameters
     ----------
     csv_in_name : str
         The CSV file with the seed urls.
-    csv_out_name : str
-        The CSV file to write the network request urls.
+    csv_out_path : str
+        The directory to store the CSV files containing the network requests.
     csv_index_name : str
         The CSV file to write the extraction status.
     timeout_duration : str
@@ -189,11 +204,10 @@ def create_with_csv(csv_in_name, csv_out_name, csv_index_name, timeout_duration,
         csv_reader = csv.reader(csv_file_in)
             
         index_writer = IndexWriter(csv_index_name, use_archive)
-        csv_writer = CSVWriter(csv_out_name, use_archive)
+        csv_writer = CSVWriter(csv_out_path, use_archive)
 
         # Append header info to CSV files
         index_writer.initialize()
-        csv_writer.initialize()
 
         # Skip the header of the CSV
         next(csv_reader)
@@ -205,9 +219,15 @@ def create_with_csv(csv_in_name, csv_out_name, csv_index_name, timeout_duration,
             if use_archive:
                 date = row[2]
                 url = row[3]
+                csv_out_name = '{0}{1}.{2}.{3}.csv'.format(csv_out_path, archive_id, url_id, date)
             else:
                 date = None
                 url = row[2]
+                csv_out_name = '{0}{1}.{2}.csv'.format(csv_out_path, archive_id, url_id)
+
+            # Empty rows and change csv name
+            csv_writer.reset(csv_out_name)
+            csv_writer.initialize()
 
             print("url #{0} {1}".format(url_id, url))
             logging.info("url #{0} {1}".format(url_id, url))
@@ -217,18 +237,21 @@ def create_with_csv(csv_in_name, csv_out_name, csv_index_name, timeout_duration,
             # Append index element to rows (array in IndexWriter class)
             index_writer.writerow(archive_id, url_id, url, site_status, \
                     site_message, extraction_message, date)
+
+            # Checks if elements exist other than header. If True, writes to file. Otherwise pass.
+            if (len(csv_writer.rows) != 1):
+                csv_writer.finalize()
     
         # Write elements to CSV file
         index_writer.finalize()
-        csv_writer.finalize()
 
-def create_with_db(csv_out_name, csv_index_name, timeout_duration, make_csv, use_archive):
+def create_with_db(csv_out_path, csv_index_name, timeout_duration, make_csv, use_archive):
     """Extracts network requests using the input database file with seed urls.
 
     Parameters
     ----------
-    csv_out_name : str
-        The CSV file to write the network request urls.
+    csv_out_path : str
+        The directory to store the CSV files containing the network requests..
     csv_index_name : str
         The CSV file to write the extraction status.
     timeout_duration : str
@@ -248,14 +271,14 @@ def create_with_db(csv_out_name, csv_index_name, timeout_duration, make_csv, use
     connection.commit()
     results = cursor.fetchall()
 
-    csv_writer = CSVWriter(csv_out_name, use_archive)
+    csv_writer = CSVWriter(csv_out_path, use_archive)
     index_writer = IndexWriter(csv_index_name, use_archive)
 
     if make_csv:
         # Append header info to CSV files
-        csv_writer.initialize()
         index_writer.initialize()
-    
+        csv_writer.initialize()
+
     for row in results:
         archive_id = str(row[0])
         url_id = str(row[1])
@@ -380,7 +403,7 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
 
     """
 
-    browser = await launch(headless=True)#, dumpio=True)
+    browser = await launch(headless=True, dumpio=True)
 
     # Intercepts network requests
     async def handle_request(request):
@@ -475,10 +498,10 @@ def parse_args():
     -------
     csv_in_name : str
         The CSV file containing current urls.
-    csv_out_name : str
-        The CSV file to store the network requests of current urls.
+    csv_out_path : str
+        The directory to store the CSV files containing network requests.
     csv_index_name : str
-        The CSV file to store the extraction status of current urls.
+        The CSV file to store the extraction status of the urls.
     use_csv : bool
         Whether or not to output as csv.
     use_db : bool
@@ -494,7 +517,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("--out", type=str, help="The CSV file to write the urls")
+    parser.add_argument("--csvout", type=str, help="Specify directory to output CSV files containing network requests.")
     parser.add_argument("--index", type=str, help="The CSV file to write the extraction status of urls")
     parser.add_argument("--db", type=str, help="The DB file to store the urls")
     parser.add_argument("--csv", type=str, help="Input CSV file with current urls")
@@ -512,7 +535,7 @@ def parse_args():
         print("Must only specify one type of input file\n")
         exit()
 
-    if args.csv is not None and args.out is None and args.index is None:
+    if args.csv is not None and args.csvout is None and args.index is None:
         print("Must specify output file\n")
         exit()
 
@@ -527,7 +550,7 @@ def parse_args():
     else:
         use_csv = False
 
-    if args.out is not None:
+    if args.csvout is not None:
         make_csv = True
     else:
         make_csv = False
@@ -537,7 +560,7 @@ def parse_args():
     else:
         timeout_duration = args.timeout
 
-    return args.csv, args.out, args.index, timeout_duration, use_csv, use_db, make_csv, args.archive
+    return args.csv, args.csvout, args.index, timeout_duration, use_csv, use_db, make_csv, args.archive
 
 def connect_sql(path, use_archive):
     """Connect the database file, and creates the necessary tables.
@@ -671,15 +694,15 @@ def convert_time(secs):
     print("%d:%d:%d:%d" % (d.day-1, d.hour, d.minute, d.second))
 
 def main():
-    csv_in_name, csv_out_name, csv_index_name, \
+    csv_in_name, csv_out_path, csv_index_name, \
             timeout_duration, use_csv, use_db, make_csv, use_archive = parse_args()
     set_up_logging(use_archive, timeout_duration)
 
     print("Extracting network requests...")
     if use_csv:
-        create_with_csv(csv_in_name, csv_out_name, csv_index_name, timeout_duration, use_archive)
+        create_with_csv(csv_in_name, csv_out_path, csv_index_name, timeout_duration, use_archive)
     if use_db:
-        create_with_db(csv_out_name, csv_index_name, timeout_duration, make_csv, use_archive)
+        create_with_db(csv_out_path, csv_index_name, timeout_duration, make_csv, use_archive)
 
 start_time = time.time()
 main()
