@@ -7,9 +7,61 @@ import urllib.error
 import logging
 import time
 import os
+import tracemalloc
+import linecache
 from datetime import datetime, timedelta
 from pyppeteer import launch
 from pyppeteer import errors
+
+# Code taken directly from reference
+def display_top(snapshot, key_type='lineno', limit=10):
+    """ Code to display the 10 lines allocating the most memory with pretty output.
+
+    Parameters
+    ----------
+    snapshot : Snapshot
+        Snapshot of traces of memory blocks allocated by python.
+    key_type : str
+        Key word used to filter snapshot statistics.
+    limit : int
+        Number of lines shown allocating the most memory.
+
+    References
+    ----------
+    .. [1] https://docs.python.org/3/library/tracemalloc.html
+
+    """
+
+    snapshot = snapshot.filter_traces((
+        tracemalloc.Filter(False, "<frozen importlib._bootstrap>"),
+        tracemalloc.Filter(False, "<unknown>"),
+        ))
+    top_stats = snapshot.statistics(key_type)
+
+    print("Top %s lines" % limit)
+    
+    for index, stat in enumerate(top_stats[:limit], 1):
+        frame = stat.traceback[0]
+        filename = os.sep.join(frame.filename.split(os.sep)[-2:])
+        
+        print("#%s: %s:%s: %.1f KiB"
+                % (index, filename, frame.lineno, stat.size / 1024))
+        
+        line = linecache.getline(frame.filename, frame.lineno).strip()
+        
+        if line:
+            print('     %s' % line)
+
+    other = top_stats[limit:]
+    
+    if other:
+        size = sum(stat.size for stat in other)
+
+        print("%s other: %.1f KiB" % (len(other), size / 1024))
+
+    total = sum(stat.size for stat in top_stats)
+    
+    print("Total allocated size: %.1f KiB" % (total / 1024))
 
 class Writer:
     """
@@ -74,9 +126,10 @@ class Writer:
 
         with open(self.file_name, 'w+') as csv_file_out:
             csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
-            
-            for row in self.rows:
-                csv_writer.writerow(row)
+            csv_writer.writerows(self.rows)
+
+        # Close file
+        csv_file_out.close()
 
 class CSVWriter(Writer):
     """
@@ -384,7 +437,7 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
     ----------
     csv_writer : CSVWriter
         CSVWriter object which handles the creation of the CSV containing the network requests.
-    url : str
+    #url : str
         The url where network requests are extracted..
     archive_id : str
         The archive ID.
@@ -400,10 +453,13 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
     .. [1] https://pypi.org/project/pyppeteer/
 
     .. [2] https://github.com/miyakogi/pyppeteer/issues/140
+    
+    .. [3] https://github.com/miyakogi/pyppeteer/issues/163
 
     """
 
-    browser = await launch(headless=True, dumpio=True)
+    # Weird memory issue fix for pyppeteer (setting autoClose=False)
+    browser = await launch(headless=True, dumpio=True, autoClose=False)
 
     # Intercepts network requests
     async def handle_request(request):
@@ -426,8 +482,9 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
         page.on('response', lambda res: asyncio.ensure_future(handle_response(res, csv_writer, \
                                                                               archive_id, url_id, date)))
         
-        response = await page.goto(url, {'waitUntil': ['networkidle0'], \
+        response = await page.goto(url, {'waitUntil': ['networkidle2'], \
                                          'timeout': int(timeout_duration) * 1000})
+        
         #input()
 
     except Exception as e:
@@ -704,6 +761,9 @@ def main():
     if use_db:
         create_with_db(csv_out_path, csv_index_name, timeout_duration, make_csv, use_archive)
 
+tracemalloc.start()
 start_time = time.time()
 main()
 convert_time(int(time.time() - start_time))
+snapshot = tracemalloc.take_snapshot()
+display_top(snapshot)

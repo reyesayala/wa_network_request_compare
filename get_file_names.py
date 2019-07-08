@@ -1,6 +1,7 @@
 import sqlite3
 import argparse
 import csv
+import os
 
 def open_with_csv(curr_csv_name, arch_csv_name, csv_out_name, do_print):
     """Parse both index files line by line and writes the urls and file names to the output file.
@@ -106,7 +107,8 @@ def parse_args():
     parser.add_argument("--currcsv", type=str, help="The CSV file with the current network request index")
     parser.add_argument("--archcsv", type=str, help="The CSV file with the archive network request index")
     parser.add_argument("--db", type=str, help="Input DB file with the URLs")
-    parser.add_argument("--out", type=str, help="The CSV file to write the urls and file names")
+    parser.add_argument("--out", type=str, \
+            help="(Optional) The CSV file to write the urls and file names, default writes into a file called paired_urls.csv")
     parser.add_argument("--print", action='store_true', \
             help="(Optional) Include to print URLs and file names to stdout, default doesn't print")
 
@@ -126,8 +128,13 @@ def parse_args():
         exit()
 
     if args.out is None:
-        print("Must specify output file\n")
-        exit()
+        if os.path.exists("paired_urls.csv"):
+            print("'paired_urls.csv' file already exists, aborting...")
+            exit()
+        else:
+            file_name = "paired_urls.csv"
+    else:
+        file_name = args.out
 
     if args.currcsv is not None and args.archcsv is not None:
         use_csv = True
@@ -140,7 +147,7 @@ def parse_args():
     else:
         use_db = False
 
-    return args.out, args.currcsv, args.archcsv, use_csv, use_db, args.print
+    return file_name, args.currcsv, args.archcsv, use_csv, use_db, args.print
 
 def connect_sql(path):
     """Connects the DB file. """
