@@ -163,15 +163,15 @@ class CSVWriter(Writer):
         archive_id : str
             The archive ID.
         url_id : str
-            The url ID.
+            The URL ID.
         url : str
-            The network request url.
+            The network request URL.
         resource_type : str
             The resouce type of the network request.
         status_code : str
-            The status code of the network request url.
+            The status code of the network request.
         date : str
-            The date of the archive url. Default is None if current url.
+            The date of the archive URL. Default is None if current URL.
 
         """
         
@@ -214,18 +214,18 @@ class IndexWriter(Writer):
         archive_id : str
             The archive ID.
         url_id : str
-            The url ID.
+            The URL ID.
         url : str
-            The current url from the input CSV file (or db).
+            The current URL from the input CSV file (or db).
         site_status : str
-            The status of the current url (LIVE, FAIL, or REDIRECT).
+            The status of the current URL (LIVE, FAIL, or REDIRECT).
         site_message : str
             The success/error message from the site.
         extraction_message : str
             The success/error message indicating whether or not extraction of network requests was a
             success or failure.
         date : str
-            The date of the archive url. Default is None if current url.
+            The date of the archive URL. Default is None if current URL.
 
         """
     
@@ -236,7 +236,7 @@ class IndexWriter(Writer):
             self.rows.append([archive_id, url_id, url, site_status, site_message, extraction_message])
 
 def create_with_csv(csv_in_name, csv_out_path, csv_index_name, timeout_duration, use_archive):
-    """Extracts network requests using the input CSV with seed urls.
+    """Extracts network requests using the input CSV with seed URLs.
     
     Parameters
     ----------
@@ -299,7 +299,7 @@ def create_with_csv(csv_in_name, csv_out_path, csv_index_name, timeout_duration,
         index_writer.finalize()
 
 def create_with_db(csv_out_path, csv_index_name, timeout_duration, make_csv, use_archive):
-    """Extracts network requests using the input database file with seed urls.
+    """Extracts network requests using the input database file with seed URLs.
 
     Parameters
     ----------
@@ -383,22 +383,22 @@ def create_with_db(csv_out_path, csv_index_name, timeout_duration, make_csv, use
     connection.close()
 
 def extract_requests(csv_writer, url, archive_id, url_id, timeout_duration, date):
-    """Fetches url from input CSV and extract network requests 
+    """Fetches URL from input CSV and extract network requests 
     
     Parameters
     ----------
     csv_writer : CSVWriter
         CSVWriter object which handles the creation of the CSV file containing the network requests.
     url : str
-        The url to extract network requests.
+        The URL to extract network requests.
     archive_id : str
         The archive ID.
     url_id : str
-        The url ID.
+        The URL ID.
     timeout_duration : str
         Duration before timeout when going to each website.
     date : str
-        The date of the archive url.
+        The date of the archive URL.
 
     """
 
@@ -437,16 +437,16 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
     ----------
     csv_writer : CSVWriter
         CSVWriter object which handles the creation of the CSV containing the network requests.
-    #url : str
-        The url where network requests are extracted..
+    url : str
+        The URL where network requests are extracted.
     archive_id : str
         The archive ID.
     url_id : str
-        The url ID.
+        The URL ID.
     timeout_duration : str
         Duration before timeout when going to each website.
     date : str
-        The date of the archive url.
+        The date of the archive URL.
 
     References
     ----------
@@ -484,8 +484,6 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
         
         response = await page.goto(url, {'waitUntil': ['networkidle2'], \
                                          'timeout': int(timeout_duration) * 1000})
-        
-        #input()
 
     except Exception as e:
         try:
@@ -502,12 +500,12 @@ async def puppeteer_extract_requests(csv_writer, url, archive_id, url_id, timeou
         await browser.close()
 
 def check_site_availability(url):
-    """Run a request to see if the given url is available.
+    """Run a request to see if the given URL is available.
 
     Parameters
     ----------
     url : str
-        The url to check.
+        The URL to check.
 
     Returns
     -------
@@ -554,13 +552,13 @@ def parse_args():
     Returns
     -------
     csv_in_name : str
-        The CSV file containing current urls.
+        The CSV file containing current/archive URLs.
     csv_out_path : str
         The directory to store the CSV files containing network requests.
     csv_index_name : str
-        The CSV file to store the extraction status of the urls.
+        The CSV file to store the extraction status of the URLs.
     use_csv : bool
-        Whether or not to output as csv.
+        Whether or not to output as CSV.
     use_db : bool
         Whether or not to output as db.
     timeout_duration: : str
@@ -575,9 +573,9 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--csvout", type=str, help="Specify directory to output CSV files containing network requests.")
-    parser.add_argument("--index", type=str, help="The CSV file to write the extraction status of urls")
-    parser.add_argument("--db", type=str, help="The DB file to store the urls")
-    parser.add_argument("--csv", type=str, help="Input CSV file with current urls")
+    parser.add_argument("--index", type=str, help="The CSV file to write the extraction status of URLs")
+    parser.add_argument("--db", type=str, help="The DB file to store the URLs")
+    parser.add_argument("--csv", type=str, help="Input CSV file with current/archive URLs. Interchangable with --db as only one type of input is allowed.")
     parser.add_argument("--timeout", type=str, help="(Optional) Specify duration before timeout for each site, in seconds, default 30 seconds")
     parser.add_argument("--archive", action="store_true", help="Include to specify input as archive seeds. Do not include if collection is current seeds.")
 
