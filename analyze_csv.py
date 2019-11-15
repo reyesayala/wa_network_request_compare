@@ -2,29 +2,41 @@ import csv
 import sys
 import os
 
-"""
-    example usage: python3 analyze_csv.py <something>.csv
-"""
+def write_csv(output_csv, output_csv_rows, header):
+    """ Writes a list of csv data to a csv file
+
+    Parameters
+    ----------
+        output_csv (str): The output file
+        output_csv_rows (list): The output file's input
+    """
+
+    try:
+        os.mkdir("./csv_outputs")     # make a folder to store the output files
+    except OSError as e:
+        pass                              # do nothing if folder already exists
+
+    path = './csv_outputs/' + output_csv
+    with open(path, 'w+') as f:
+        f_csv = csv.writer(f)
+        f_csv.writerow(header)                     # write the header to output
+        for row in output_csv_rows:
+            f_csv.writerow(row)             # write each row to the output file
 
 def main():
-    input_csv = sys.argv[1]
+    input_csv = sys.argv[1]                        # get the input csv filename
 
     # initialize the output csv files
     output_200 = input_csv[:-4] + '_200.csv'
     output_200_rows = []
-
     output_redirection = input_csv[:-4] + '_redirection.csv'
     output_redirection_rows = []
-
     output_400 = input_csv[:-4] + '_400.csv'
     output_400_rows = []
-    
     output_403 = input_csv[:-4] + '_403.csv'
     output_403_rows = []
-    
     output_404 = input_csv[:-4] + '_404.csv'
     output_404_rows = []
-
     output_urlerr = input_csv[:-4] + '_urlerr.csv'
     output_urlerr_rows = []
 
@@ -46,8 +58,10 @@ def main():
     count_total = 0
 
     with open(input_csv) as f:
-        f_csv = csv.reader(f)
-        header = next(f_csv)
+
+        f_csv = csv.reader(f)                             # init the csv reader
+
+        header = next(f_csv)                            # get the header of csv
 
         for row in f_csv:
 
@@ -98,6 +112,7 @@ def main():
     rate_404 = count_404 / count_total
     rate_urlerr = count_urlerr / count_total
 
+    # print a summary of results
     print('\nThe output files are stored in \"csv_outputs\" folder.\n')
     print('Total number of urls: {}\n'.format(count_total))
     print('Number of urls returning 200: {}'.format(count_200))
@@ -112,24 +127,5 @@ def main():
     print('Rate of urls returning 404: {0:.2f}%\n'.format(rate_404))
     print('Number of urls with errors: {}'.format(count_urlerr))
     print('Rate of urls with errors: {0:.2f}%\n'.format(rate_urlerr))
-
-def write_csv(output_csv, output_csv_rows, header):
-    """ A function that writes a list of csv data to a csv file
-
-    Args:
-        output_csv (str): The output file
-        output_csv_rows (list): The output file's input
-    """
-    try:
-        os.mkdir("./csv_outputs")     # make a folder to store the output files
-    except OSError as e:
-        pass                              # do nothing if folder already exists
-
-    path = './csv_outputs/' + output_csv
-    with open(path, 'w+') as f:
-        f_csv = csv.writer(f)
-        f_csv.writerow(header)                     # write the header to output
-        for row in output_csv_rows:
-            f_csv.writerow(row)             # write each row to the output file
 
 main()
