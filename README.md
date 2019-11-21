@@ -93,10 +93,29 @@ Arguments:
 * timeout - (optional) Specify duration before timeout for each site, in seconds, default 30 seconds.
 * archive - Include if input CSV file or input DB file is used for archive URLs.
 
+### analyze_csv.py
+
+This program takes a csv file as input, the input csv file should have the following data (in order): `archive_id`, `url_id`, `url`, `site_status`, `site_message`, and `screenshot_message`.
+
+The program categorizes each row of data by their `site_status` and `site_message`:
+* site status - Contains 'LIVE' if the URL can be reached or redirected, and 'FAIL' if the URL could not be reached (ex. 404).
+* site message - A reason on why site status was 'LIVE' or 'FAIL'. (ex. 'Redirected to https://..' or 'HTTPError: 404')
+
+The output files will be in a folder called "csv_outputs" created at where this program is executed.
+
+Command syntax:
+```
+python3 analyze_csv.py current_index.csv
+```
+
+Argument:
+
+* Input CSV file with `archive_id`, `url_id`, `url`, `site_status`, `site_message`, and `screenshot_message`.
 
 ## Authors
 * **Brenda Reyes Ayala** 
 * **Andy Li**
+* **Xiaohui Liu**
 ## License
 todo
 
