@@ -3,77 +3,13 @@ import sqlite3
 import csv
 import requests
 from bs4 import BeautifulSoup
+from urllib.request import urlretrieve
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
+import urllib.request
+import urllib3
 
 
-def create_with_db(make_csv, csv_out_name, remove_banner):
-    """Finds the archive urls using the DB file with current urls, and outputs it into a db.
-
-    Parameters
-    ----------
-    make_csv: bool
-        Whether or not to also output a CSV file.
-    csv_out_name : str
-        The CSV file to write the archive urls.
-    remove_banner : bool
-        Whether or not to generate urls that include Archive-It banner.
-
-    """
-
-    cursor.execute("select * from current_urls;")
-    connection.commit()
-    results = cursor.fetchall()
-
-    if make_csv:
-        csv_file_out = open(csv_out_name, "w+")
-        csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
-        csv_writer.writerow(["archive_id", "url_id", "archive_url"])
-
-    for row in results:
-        archive_id = str(row[0])
-        url_id = str(row[1])
-        url = row[2]
-
-        archive_url = "https://wayback.archive-it.org/{0}/*/{1}".format(archive_id, url)
-
-        print("url #" + url_id)
-
-        # get external link to each capture                                                                                        
-        found = False
-        page = requests.get(archive_url)                # next 7 lines just go through the html to find the urls
-        soup = BeautifulSoup(page.content, features='html.parser')
-        for htmltd in soup.findAll('td'):
-            htmlclass = htmltd.get('class')
-            if htmlclass is not None:
-                if htmlclass[0] == "mainBody":
-                    for htmla in htmltd.findAll('a'):
-                        found_url = htmla.get('href')
-                        date = found_url.split('/')[4]
-
-                        if remove_banner:       # add if_ into url if remove_banner is true
-                            index = found_url.find('/', 40)
-                            final_url = found_url[:index] + "if_" + found_url[index:]
-                        else:
-                            final_url = found_url
-
-                        cursor.execute("insert into archive_urls values ({0}, {1}, '{2}', '{3}');"
-                                       .format(archive_id, url_id, date, final_url))        # insert into db
-
-                        if make_csv:
-                            csv_writer.writerow([archive_id, url_id, date, final_url])
-                        
-                        found = True
-
-        if not found:
-            cursor.execute("insert into archive_urls values({0}, {1}, NULL, NULL);".format(archive_id, url_id))
-            if make_csv:
-                csv_writer.writerow([archive_id, url_id, "", ""])
-
-        page.close()
-        connection.commit()
-
-    connection.close()
-    if make_csv:
-        csv_file_out.close()
 
 
 def create_with_csv(csv_out_name, csv_in_name, remove_banner):
@@ -89,12 +25,28 @@ def create_with_csv(csv_out_name, csv_in_name, remove_banner):
         Whether or not to generate urls that include Archive-It banner.
 
     """
+    # Create a session
+    session = requests.Session()
+    
+    # Define a retry strategy
+    retry_strategy = Retry(
+    total=5,  # Total number of retries
+    backoff_factor=1,  # Waits 1 second between retries, then 2s, 4s, 8s...
+    status_forcelist=[429, 500, 502, 503, 504],  # Status codes to retry on
+    method_whitelist=["HEAD", "GET", "OPTIONS"]  # Methods to retry
+    )
 
+    # Mount the retry strategy to the session
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+    
+    
     with open(csv_in_name, 'r') as csv_file_in:
         csv_reader = csv.reader(csv_file_in)
         with open(csv_out_name, 'w+') as csv_file_out:
             csv_writer = csv.writer(csv_file_out, delimiter=',', quoting=csv.QUOTE_ALL)
-            csv_writer.writerow(["archive_id", "url_id", "archive_url"])
+            csv_writer.writerow(["archive_id", "url_id", "date", "archive_url"])
 
             count = 0
             for line in csv_reader:
@@ -107,32 +59,47 @@ def create_with_csv(csv_out_name, csv_in_name, remove_banner):
                 url = line[2]
                 archive_url = "https://wayback.archive-it.org/{0}/*/{1}".format(archive_id, url)
 
-                print("url #" + url_id)
+                #for each live url, use the Archive-It API to return a list of all timestamps that were archived 
+                print("url #" + url_id + ": " + archive_url)
+                prefix = "https://wayback.archive-it.org/"+archive_id
+                prefix2 = "/timemap/cdx?url="
+                postfix = "&fl=timestamp"
+                request_url = prefix+prefix2+url+postfix
+                print(" request url :"+request_url)
+                
+                try:
 
-                found = False  # next 15 lines just goes through the html to find the urls
-                page = requests.get(archive_url)
-                soup = BeautifulSoup(page.content, features='html.parser')
-                for htmltd in soup.findAll('td'):
-                    htmlclass = htmltd.get('class')
-                    if htmlclass is not None:
-                        if htmlclass[0] == "mainBody":
-                            for htmla in htmltd.findAll('a'):
-                                found_url = htmla.get('href')
-                                date = found_url.split('/')[4]
+                    #request the timestamp
+                    headers = {'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:55.0) Gecko/20100101 Firefox/55.0',}
+                    response = session.get(request_url, headers=headers) 
+                    timestamps = response.text.split("\n")
+                    timestamps.remove('')
+                    print(timestamps)
+                    
+                    timestamp_urls = []
+                    for item in timestamps: 
+                        if remove_banner: 
+                            archived_url = prefix+"/"+item+"if_/"+url
+                        else:
+                            archived_url = prefix+"/"+item+url
+                        
+                        timestamp_urls.append(archived_url)
+                    print(timestamp_urls)
+                    
+                    #write to a csv file the archive id, the url id, and the final, archived url
+                    for final_url in timestamp_urls: 
+                        for date in timestamps:
+                            csv_writer.writerow([archive_id, url_id, date, final_url])
 
-                                if remove_banner:       # add if_ into archive url if remove_banner is true
-                                    index = found_url.find('/', 40)
-                                    final_url = found_url[:index] + "if_" + found_url[index:]
-                                else:
-                                    final_url = found_url
+                    
+                except requests.exceptions.ConnectionError as e:
+                    print(f"Error connecting to the server: {e}")
+                except requests.exceptions.HTTPError as e:
+                    print(f"HTTP error occurred: {e}")
+                except requests.exceptions.RequestException as e:
+                    print(f"An error occurred: {e}")
 
-                                csv_writer.writerow([archive_id, url_id, date, final_url])
 
-                                found = True
-                if not found:
-                    csv_writer.writerow([archive_id, url_id, "", ""])
-
-                page.close()
 
 
 def parse_args():
@@ -216,9 +183,13 @@ def main():
     use_db, use_csv, make_csv, csv_out_name, csv_in_name, remove_banner = parse_args()
     print("Getting archive urls...")
     if use_csv:
+        
+        print("Reading CSV")
         create_with_csv(csv_out_name, csv_in_name, remove_banner)
     if use_db:
         create_with_db(make_csv, csv_out_name, remove_banner)
     
 
 main()
+
+
