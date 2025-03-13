@@ -53,7 +53,7 @@ Arguments:
 
 
 ### get_file_names.py
-This program outputs a CSV file which maps the current and archive URLs with their respective network request CSV files.
+This program outputs a CSV file which maps the current and archive URLs with their respective network request CSV files. This file acts as an index. 
 > The output CSV will have four columns, current URl, archive URL, current network requests file name, archive network requests file name.
 
 Command syntax:
@@ -101,7 +101,7 @@ The program categorizes each row of data by their `site_status` and `site_messag
 * site status - Contains 'LIVE' if the URL can be reached or redirected, and 'FAIL' if the URL could not be reached (ex. 404).
 * site message - A reason on why site status was 'LIVE' or 'FAIL'. (ex. 'Redirected to https://..' or 'HTTPError: 404')
 
-The output files will be in a folder called "csv_outputs" created at where this program is executed.
+The output files will be in a folder called "csv_outputs" created at where this program is executed. 
 
 Command syntax:
 ```
