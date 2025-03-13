@@ -37,9 +37,9 @@ Arguments:
 * name - Name of the archive.
 * sort - (optional) Include to sort the output.
 
-### create-archive_urls.py
-This program takes the CSV or DB from the previous program and gets the Archive-It archive URL.  
-> The output CSV file will have three columns, archive ID, URL ID, and URL.
+### create_archive_urls.py
+This program takes the CSV or DB from the previous program and gets the Archive-It archive URL using the Archive-It API.  
+> The output CSV file will have four columns, archive ID, URL ID, date, and archived URL.
 
 Command syntax: 
 ```
