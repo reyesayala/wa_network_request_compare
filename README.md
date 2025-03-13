@@ -112,6 +112,12 @@ Argument:
 
 * Input CSV file with `archive_id`, `url_id`, `url`, `site_status`, `site_message`, and `screenshot_message`.
 
+### compare_network_requests.py
+
+This program takes a csv file (an index file that was produced as ouput by analyze_csv.py). The input csv file should have the following data in order: "current_url","archive_url","current_file_name", and "archive_file_name". 
+
+For each pair of current requests file/archived request file, the program uses fuzzy comparison to match each current request to its archived counterpart. Then it checks to see if the status code of each request is different for the current and archived requests. Finally, it output which archived requests were not found in the current version, as well as a measure of interactional quality, defined as 
+
 ## Authors
 * **Brenda Reyes Ayala** 
 * **Andy Li**
