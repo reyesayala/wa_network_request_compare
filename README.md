@@ -118,6 +118,10 @@ This program takes a csv file (an index file that was produced as ouput by analy
 
 For each pair of current requests file/archived request file, the program uses fuzzy comparison to match each current request to its archived counterpart. Then it checks to see if the status code of each request is different for the current and archived requests. Finally, it output which archived requests were not found in the current version, as well as a measure of interactional quality, defined as 
 
+### select_archived_url.py
+
+This program is a helper program and is optional to run. It takes in the file archive_urls.csv and and produces a smaller csv file by choosing a single capture date for each url. The choosing is done at random. This can help create a smaller sample of archive_urls.csv in case the file is too large/slow to run. 
+
 ## Authors
 * **Brenda Reyes Ayala** 
 * **Andy Li**
