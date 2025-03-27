@@ -83,7 +83,7 @@ The output CSV file containing the network requests of the current/archive URLs 
 
 Command syntax:
 ```
-python3 extract_network_requests.py --csv=current_urls.csv --db=urls.db --csvout=current_requests/ --index=extraction_status.csv --timeout=30 --archive
+python3 extract_network_requests.py --csv=current_urls.csv --db=urls.db --csvout=current_requests/ --index=current_index.csv --timeout=30 --archive
 ```
 Arguments:
 * csv - Input CSV file with current/archive URLs. Interchangable with --db as only one type of input is allowed.
