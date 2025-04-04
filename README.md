@@ -58,7 +58,7 @@ This program outputs a CSV file which maps the current and archive URLs with the
 
 Command syntax:
 ```
-python3 get_file_names.py --currcsv=current_index/ --archcsv=archive_index/ --db=urls.db --out=file_names.csv --print
+python3 get_file_names.py --currcsv=current_index.csv --archcsv=archive_index.csv --db=urls.db --out=file_names.csv --print
 ```
 Arguments:
 * currcsv - The CSV file with the current URLs index.
