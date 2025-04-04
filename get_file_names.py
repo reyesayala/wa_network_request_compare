@@ -40,18 +40,24 @@ def open_with_csv(curr_csv_name, arch_csv_name, csv_out_name, do_print):
                     while True:
 
                         [carchive_id, curl_id, curl] = crow[:3]
+                        print(crow)
                         cextraction_status = crow[-1]
+                        print(crow[3])
                         [aarchive_id, aurl_id, adate, aurl] = arow[:4]
+                        print(arow)
                         aextraction_status = arow[-1]
                         
                         curl_id = int(curl_id)
                         aurl_id = int(aurl_id)
+                        print("------------------------------------------------------")
+                        print("current url id: ", curl_id, "archive url id: ", aurl_id)
 
                         # Increments archive index
-                        if curl_id > aurl_id or aextraction_status != "Extraction successful":
+                        if curl_id > aurl_id: #or aextraction_status != "Extraction successful":
                             arow = next(arch_csv_reader)
+                            #print("Extraction not succesful, moving to next url")
                         # Increments current index
-                        elif curl_id < aurl_id or cextraction_status != "Extraction successful":
+                        elif curl_id < aurl_id: #or cextraction_status != "Extraction successful":
                             crow = next(curr_csv_reader)
                         # Found matching url
                         else:
@@ -167,3 +173,4 @@ def main():
         open_with_db(csv_out_name, do_print)
 
 main()
+
