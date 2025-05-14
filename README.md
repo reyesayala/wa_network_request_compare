@@ -53,17 +53,16 @@ Arguments:
 
 
 ### get_file_names.py
-This program outputs a CSV file which maps the current and archive URLs with their respective network request CSV files. This file acts as an index. 
+This program outputs a CSV file (called file_names.csv) which maps the current and archive URLs with their respective network request CSV files. This file acts as an index. 
 > The output CSV will have four columns, current URl, archive URL, current network requests file name, archive network requests file name.
 
 Command syntax:
 ```
-python3 get_file_names.py --currcsv=current_index.csv --archcsv=archive_index.csv --db=urls.db --out=file_names.csv --print
+python3 get_file_names.py --currcsv=current_index.csv --archcsv=archive_index.csv --out=file_names.csv --print
 ```
 Arguments:
 * currcsv - The CSV file with the current URLs index.
 * archcsv - The CSV file with the archive URLs index.
-* db - Input DB file with urls. Interchangeable with using --currcsv and --archcsv since only one type of input is allowed. 
 * out - The CSV file to write the urls and file names. 
 * print - (optional) Include to print urls and file names to stdout, default doesn't print.
 
