@@ -69,7 +69,17 @@ Arguments:
 
 
 ### extract_network_requests.py
-This program outputs two CSV files, one with the extraction status of the current/archive URLs, and the other with the network requests for the current/archive URLs.
+
+This program should be run twice, once for the current URLs (with current_urls.csv as input), and a second time for the archived URLs (with archive_urls.csv as input). 
+
+This program has two outputs: 
+
+<ol>
+  <li>An index file with the extraction status of the current/archive URLs (called current_index.csv or archive_index.csv)</li>
+  <li>A set of files other that each contain the network requests for the current or archive URLs (created in the directory "current_requests" or "archive_requests"</li>
+</ol>
+
+
 
 The CSV file containing the extraction status of the current/archive URLs will have six/seven columns, archive ID, URL ID, archive URL, site status, site message, extraction message, and date.
 
