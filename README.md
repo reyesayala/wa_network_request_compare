@@ -76,18 +76,18 @@ This program has two outputs:
 
 <ol>
   <li>An index file with the extraction status of the current/archive URLs (called current_index.csv or archive_index.csv)</li>
-  <li>A set of files other that each contain the network requests for the current or archive URLs (created in the directory "current_requests" or "archive_requests"</li>
+  <li>A set of files each containing the network requests for the current or archive URLs (created in the directory "current_requests" or "archive_requests")</li>
 </ol>
 
 
 
-The CSV file containing the extraction status of the current/archive URLs will have six/seven columns, archive ID, URL ID, archive URL, site status, site message, extraction message, and date.
+The index file will have six/seven columns, archive ID, URL ID, archive URL, site status, site message, extraction message, and date.
 
 * site status - Contains 'LIVE' if the URL can be reached or redirected, and 'FAIL' if the URL could not be reached (ex. 404).
 * site message - A reason on why site status was 'LIVE' or 'FAIL'. (ex. 'Redirected to https://..' or 'HTTPError: 404')
 * extraction message - Either 'Extraction successful' or reason extraction was unsuccessful. (ex. 'Navigation Timeout Exceeded: 30000 ms exceeded.')
 
-The output CSV file containing the network requests of the current/archive URLs will have five/six columns, archive ID, URL ID, URL, resource type, status code, and date.
+The output CSV files containing the network requests of the current/archive URLs will have five/six columns, archive ID, URL ID, URL, resource type, status code, and date.
 
 > Date is only included if extracting network requests from archive URLs
 
